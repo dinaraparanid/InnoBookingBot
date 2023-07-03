@@ -14,6 +14,10 @@ import com.paranid5.innobookingbot.data.extensions.joinedString
 import com.paranid5.innobookingbot.data.extensions.joinedToMessage
 import com.paranid5.innobookingbot.data.extensions.successfulBookingMessage
 import com.paranid5.innobookingbot.data.extensions.toInstantOrNull
+import com.paranid5.innobookingbot.data.firebase.addNewUserAsync
+import com.paranid5.innobookingbot.data.firebase.isUserSignedIn
+import com.paranid5.innobookingbot.data.firebase.outlookEmail
+import com.paranid5.innobookingbot.data.firebase.sendLoginEmail
 import com.paranid5.innobookingbot.domain.ktor.*
 import io.ktor.client.*
 import io.ktor.http.*
@@ -27,8 +31,10 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 private const val START_REQUEST = "start"
+private const val SIGN_IN_REQUEST = "sign_in"
 private const val ROOMS_REQUEST = "rooms"
 private const val FREE_REQUEST = "free"
+private const val MINE_REQUEST = "mine"
 private const val BOOK_REQUEST = "book"
 private const val BOOK_FILTER_REQUEST = "book_filter"
 private const val CANCEL_REQUEST = "cancel"
@@ -49,8 +55,10 @@ fun Dispatcher.configureCommands(ktorClient: HttpClient) {
     val inputControls = ConcurrentHashMap<ChatId, AtomicBoolean>()
 
     configureStartCommand()
+    configureSignInCommand(messageChannels, inputControls)
     configureRoomsCommand(ktorClient)
     configureFreeRoomsCommand(ktorClient, messageChannels, inputControls)
+    configureMineRequest(ktorClient)
     configureBookRequest(ktorClient, messageChannels, inputControls)
     configureQueryRequest(ktorClient, messageChannels, inputControls)
     configureCancelRequest(ktorClient, messageChannels, inputControls)
@@ -75,8 +83,10 @@ private fun Dispatcher.configureStartCommand() =
                 I can help you to book available study rooms in Innopolis University.
 
                 I can do the following things:
+                /sign_in - login with your innopolis email
                 /rooms - show all bookable rooms
                 /free - show all free rooms at the specified time period
+                /mine - show all your actual bookings
                 /book - book any available room
                 /cancel - cancel booking
                 /rules - show booking rules, accepted by the University
@@ -84,13 +94,52 @@ private fun Dispatcher.configureStartCommand() =
         )
     }
 
+private fun Dispatcher.configureSignInCommand(
+    messageChannels: MutableMap<ChatId, Channel<String>>,
+    inputControls: MutableMap<ChatId, AtomicBoolean>
+) = command(SIGN_IN_REQUEST) {
+    update.consume()
+
+    scope.launch(Dispatchers.IO) {
+        val inputController = inputControls.getOrPut(chatId, ::AtomicBoolean).apply { set(true) }
+
+        val email = getEmailOrSendError(chatId, messageChannels) ?: run {
+            inputController.set(false)
+            return@launch
+        }
+
+        val correctAuthCode = sendLoginEmail(email)
+
+        val inputAuthCode = getEmailAuthCodeOrSendError(chatId, messageChannels) ?: run {
+            inputController.set(false)
+            return@launch
+        }
+
+        if (inputAuthCode != correctAuthCode) {
+            sendError("Incorrect auth code. Please, try again")
+            inputController.set(false)
+            return@launch
+        }
+
+        addNewUserAsync(telegramId, email)
+        sendMessage("You have successfully confirmed your email! Now you have an access to bot's functionality")
+    }
+}
+
 private fun Dispatcher.configureRoomsCommand(ktorClient: HttpClient) =
     command(ROOMS_REQUEST) {
         update.consume()
 
-        when (val result = ktorClient.getRoomsAsync().await()) {
-            is Either.Left -> sendRooms(result.value)
-            is Either.Right -> sendError(result.value)
+        scope.launch(Dispatchers.IO) {
+            if (!telegramId.isUserSignedIn) {
+                sendNotSignedInError()
+                return@launch
+            }
+
+            when (val result = ktorClient.getRoomsAsync().await()) {
+                is Either.Left -> sendRooms(result.value)
+                is Either.Right -> sendError(result.value)
+            }
         }
     }
 
@@ -102,6 +151,11 @@ private fun Dispatcher.configureFreeRoomsCommand(
     update.consume()
 
     scope.launch(Dispatchers.IO) {
+        if (!telegramId.isUserSignedIn) {
+            sendNotSignedInError()
+            return@launch
+        }
+
         val inputController = inputControls.getOrPut(chatId, ::AtomicBoolean).apply { set(true) }
 
         val (start, end) = getBookTimePeriodsOrSendError(chatId, messageChannels) ?: run {
@@ -118,6 +172,20 @@ private fun Dispatcher.configureFreeRoomsCommand(
     }
 }
 
+private fun Dispatcher.configureMineRequest(ktorClient: HttpClient) =
+    command(MINE_REQUEST) {
+        update.consume()
+
+        when (
+            val result = ktorClient
+                .getMineBooksAsync(telegramId.outlookEmail)
+                .await()
+        ) {
+            is Either.Left -> sendBookings(result.value)
+            is Either.Right -> sendError(result.value)
+        }
+    }
+
 private fun Dispatcher.configureBookRequest(
     ktorClient: HttpClient,
     messageChannels: MutableMap<ChatId, Channel<String>>,
@@ -126,6 +194,11 @@ private fun Dispatcher.configureBookRequest(
     update.consume()
 
     scope.launch(Dispatchers.IO) {
+        if (!telegramId.isUserSignedIn) {
+            sendNotSignedInError()
+            return@launch
+        }
+
         val inputController = inputControls.getOrPut(chatId, ::AtomicBoolean).apply { set(true) }
 
         val title = getBookTitleOrSendError(chatId, messageChannels) ?: run {
@@ -133,10 +206,7 @@ private fun Dispatcher.configureBookRequest(
             return@launch
         }
 
-        val email = getEmailOrSendError(chatId, messageChannels) ?: run {
-            inputController.set(false)
-            return@launch
-        }
+        val email = telegramId.outlookEmail
 
         val (start, end) = getBookTimePeriodsOrSendError(chatId, messageChannels) ?: run {
             inputController.set(false)
@@ -168,6 +238,11 @@ private fun Dispatcher.configureQueryRequest(
     update.consume()
 
     scope.launch(Dispatchers.IO) {
+        if (!telegramId.isUserSignedIn) {
+            sendNotSignedInError()
+            return@launch
+        }
+
         val inputController = inputControls.getOrPut(chatId, ::AtomicBoolean).apply { set(true) }
 
         val (start, end) = getBookTimePeriodsOrSendError(chatId, messageChannels) ?: run {
@@ -192,6 +267,11 @@ private fun Dispatcher.configureCancelRequest(
     update.consume()
 
     scope.launch(Dispatchers.IO) {
+        if (!telegramId.isUserSignedIn) {
+            sendNotSignedInError()
+            return@launch
+        }
+
         val inputController = inputControls.getOrPut(chatId, ::AtomicBoolean).apply { set(true) }
         val bookId = getBookId(chatId, messageChannels)
         val cancelStatus = ktorClient.cancelBookingAsync(bookId).await()
@@ -231,7 +311,7 @@ fun CommandHandlerEnvironment.sendBookingResponse(bookingResponse: BookResponse)
     sendMessage(bookingResponse.successfulBookingMessage)
 
 fun CommandHandlerEnvironment.sendBookings(bookings: List<BookResponse>) =
-    sendMessage(bookings.joinedToMessage)
+    sendMessage(bookings.takeIf { it.isNotEmpty() }?.joinedToMessage ?: "No bookings found")
 
 private fun CommandHandlerEnvironment.sendBookTitleRequest() =
     sendMessage("Please, specify title for the event")
@@ -261,6 +341,9 @@ private fun CommandHandlerEnvironment.sendBookRoomIdRequest() =
 private fun CommandHandlerEnvironment.sendBookIdRequest() =
     sendMessage("Please, specify book's id")
 
+private fun CommandHandlerEnvironment.sendEmailAuthCodeRequest() =
+    sendMessage("To verify your identity, email to your Outlook email was sent. Please, provide auth code to finish login")
+
 private fun CommandHandlerEnvironment.sendError(message: String) =
     sendMessage("Error: $message")
 
@@ -272,6 +355,9 @@ private fun CommandHandlerEnvironment.sendValidationError() =
 
 private fun CommandHandlerEnvironment.sendCannotBookError() =
     sendError("This room cannot be booked by you during this time period")
+
+private fun CommandHandlerEnvironment.sendNotSignedInError() =
+    sendError("You have not confirmed your email. Please, use /sign_in first")
 
 private fun CommandHandlerEnvironment.sendError(statusCode: HttpStatusCode) = when (statusCode) {
     HttpStatusCode.BadRequest -> sendCannotBookError()
@@ -347,6 +433,18 @@ private suspend inline fun CommandHandlerEnvironment.getBookTimePeriodsOrSendErr
     return start to end
 }
 
+private suspend inline fun CommandHandlerEnvironment.getEmailAuthCodeOrSendError(
+    chatId: ChatId,
+    messageChannels: MutableMap<ChatId, Channel<String>>
+): Int? {
+    val code = getEmailAuthCode(chatId, messageChannels)
+
+    if (code == null)
+        sendError("Input parsing error. Please, try again")
+
+    return code
+}
+
 private suspend inline fun CommandHandlerEnvironment.getBookRoomId(
     chatId: ChatId,
     messageChannels: MutableMap<ChatId, Channel<String>>
@@ -361,4 +459,12 @@ private suspend inline fun CommandHandlerEnvironment.getBookId(
 ): String {
     sendBookIdRequest()
     return getNextMessage(chatId, messageChannels)
+}
+
+private suspend inline fun CommandHandlerEnvironment.getEmailAuthCode(
+    chatId: ChatId,
+    messageChannels: MutableMap<ChatId, Channel<String>>
+): Int? {
+    sendEmailAuthCodeRequest()
+    return getNextMessage(chatId, messageChannels).toIntOrNull()
 }

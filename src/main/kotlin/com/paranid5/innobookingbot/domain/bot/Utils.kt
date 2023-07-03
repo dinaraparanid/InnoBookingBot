@@ -9,3 +9,9 @@ inline val CommandHandlerEnvironment.chatId
 
 inline val TextHandlerEnvironment.chatId
     get() = ChatId.fromId(message.chat.id)
+
+inline val CommandHandlerEnvironment.telegramId
+    get() = message.from!!.id
+
+inline val TextHandlerEnvironment.telegramId
+    get() = message.from!!.id

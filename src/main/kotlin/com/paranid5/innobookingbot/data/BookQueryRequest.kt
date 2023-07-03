@@ -9,7 +9,7 @@ data class BookQueryRequest(val filter: Filter) {
     @Serializable
     data class Filter(
         @SerialName("started_at_or_after") val startedAtOrAfter: Instant,
-        @SerialName("ended_at_or_after") val endedAtOrAfter: Instant,
+        @SerialName("ended_at_or_before") val endedAtOrBefore: Instant,
         @SerialName("room_id_in") val roomIdIn: List<String> = listOf(),
         @SerialName("owner_email_in") val ownerEmailIn: List<String> = listOf()
     )
