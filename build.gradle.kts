@@ -30,6 +30,9 @@ dependencies {
 
     implementation("com.google.firebase:firebase-admin:9.2.0")
     implementation("com.sun.mail:javax.mail:1.6.2")
+
+    testImplementation("org.mockito:mockito-inline:5.2.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.2.0")
 }
 
 kotlin {
