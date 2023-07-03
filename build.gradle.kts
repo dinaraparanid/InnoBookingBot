@@ -33,6 +33,7 @@ dependencies {
 
     testImplementation("org.mockito:mockito-inline:5.2.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.2.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.9.2")
 }
 
 kotlin {
