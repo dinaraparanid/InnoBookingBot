@@ -101,6 +101,11 @@ private fun Dispatcher.configureSignInCommand(
     update.consume()
 
     scope.launch(Dispatchers.IO) {
+        if (telegramId.isUserSignedIn) {
+            sendError("You are already signed in")
+            return@launch
+        }
+
         val inputController = inputControls.getOrPut(chatId, ::AtomicBoolean).apply { set(true) }
 
         val email = getEmailOrSendError(chatId, messageChannels) ?: run {

@@ -52,7 +52,7 @@ fun sendLoginEmail(email: String): Int {
 
     val subject = "Email confirmation for InnoBookingBot"
 
-    val authCode = SecureRandom.getInstanceStrong().nextInt()
+    val authCode = SecureRandom.getInstanceStrong().nextInt(100, 1000000000);
 
     val text = """
         Finish login process by sending next code to the bot with /login command:
