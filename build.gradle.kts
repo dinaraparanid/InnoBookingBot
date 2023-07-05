@@ -33,9 +33,50 @@ dependencies {
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(19)
 }
 
+val mainClassTitle = "com.paranid5.innobookingbot.MainKt"
+
 application {
-    mainClass.set("MainKt")
+    mainClass.set(mainClassTitle)
+}
+
+tasks.wrapper {
+    gradleVersion = "8.2"
+    distributionType = Wrapper.DistributionType.ALL
+}
+
+tasks.jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    manifest {
+        attributes["Main-Class"] = mainClassTitle
+    }
+
+    configurations["compileClasspath"].forEach { from(zipTree(it.absoluteFile)) }
+    exclude(listOf("META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA"))
+}
+
+val buildFatJar = task("buildFatJar", type = Jar::class) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    archiveBaseName.set("${project.name}-fat")
+
+    manifest {
+        attributes["Implementation-Title"] = "Gradle Jar File Example"
+        attributes["Implementation-Version"] = archiveVersion
+        attributes["Main-Class"] = mainClassTitle
+    }
+
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    exclude(listOf("META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA"))
+    with(tasks.jar.get() as CopySpec)
+}
+
+tasks {
+    compileKotlin {
+        kotlinOptions.jvmTarget = "19"
+    }
+
+    "build" { dependsOn(buildFatJar) }
 }
