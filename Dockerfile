@@ -1,12 +1,12 @@
-# Replace `19` with your project's java version
-FROM gradle:8-jdk19 AS build
+# Replace `17` with your project's java version
+FROM gradle:8-jdk17 AS build
 COPY --chown=gradle:gradle . /home/gradle/src
 WORKDIR /home/gradle/src
 RUN export GRADLE_OPTS="-Djdk.lang.Process.launchMechanism=vfork"
 RUN gradle buildFatJar --no-daemon
 
-# Replace `19` with your project's java version
-FROM openjdk:19-alpine
+# Replace `17` with your project's java version
+FROM openjdk:17-alpine
 
 RUN apk add --no-cache bash
 

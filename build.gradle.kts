@@ -33,7 +33,7 @@ dependencies {
 }
 
 kotlin {
-    jvmToolchain(19)
+    jvmToolchain(17)
 }
 
 val mainClassTitle = "com.paranid5.innobookingbot.MainKt"
@@ -75,7 +75,7 @@ val buildFatJar = task("buildFatJar", type = Jar::class) {
 
 tasks {
     compileKotlin {
-        kotlinOptions.jvmTarget = "19"
+        kotlinOptions.jvmTarget = "17"
     }
 
     "build" { dependsOn(buildFatJar) }
