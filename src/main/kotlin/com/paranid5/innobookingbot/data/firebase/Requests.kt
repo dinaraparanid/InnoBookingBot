@@ -1,7 +1,6 @@
 package com.paranid5.innobookingbot.data.firebase
 
 import com.google.firebase.cloud.FirestoreClient
-import io.github.cdimascio.dotenv.dotenv
 import java.security.SecureRandom
 import java.util.*
 import javax.mail.Authenticator
@@ -43,12 +42,12 @@ fun addNewUserAsync(telegramId: Long, email: String) =
         )
 
 fun sendLoginEmail(email: String): Int {
-    val env = dotenv()
+    val env = System.getenv()
 
-    val userName = env["EMAIL_AUTH"]
-    val password = env["EMAIL_AUTH_PASSWORD"]
+    val userName = env["EMAIL_AUTH"]!!
+    val password = env["EMAIL_AUTH_PASSWORD"]!!
 
-    val emailFrom = env["EMAIL_AUTH"]
+    val emailFrom = env["EMAIL_AUTH"]!!
 
     val subject = "Email confirmation for InnoBookingBot"
 
