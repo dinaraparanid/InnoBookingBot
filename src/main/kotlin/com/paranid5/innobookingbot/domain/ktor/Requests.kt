@@ -15,8 +15,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.days
 
-// TODO: Real API
-private const val SERVER_URL = "http://127.0.0.1:8080"
+private const val SERVER_URL = "https://innobooking-fake-api.onrender.com"
 
 internal suspend inline fun HttpClient.getRoomsAsync() = coroutineScope {
     async(Dispatchers.IO) {
