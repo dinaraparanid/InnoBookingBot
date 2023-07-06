@@ -3,7 +3,7 @@ FROM gradle:8-jdk17 AS build
 COPY --chown=gradle:gradle . /home/gradle/src
 WORKDIR /home/gradle/src
 RUN export GRADLE_OPTS="-Djdk.lang.Process.launchMechanism=vfork"
-RUN gradle buildFatJar --no-daemon
+RUN gradle shadowJar --no-daemon
 
 # Replace `17` with your project's java version
 FROM openjdk:17
