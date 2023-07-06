@@ -16,13 +16,21 @@ private const val COLLECTION_NAME = "users"
 private inline val Long.userData
     get() = FirestoreClient
         .getFirestore()
+        .apply { println("FIREBASE 1") }
         .collection(COLLECTION_NAME)
+        .apply { println("FIREBASE 2") }
         .whereEqualTo("tg_id", toString())
+        .apply { println("FIREBASE 3") }
         .limit(1)
+        .apply { println("FIREBASE 4") }
         .get()
+        .apply { println("FIREBASE 5") }
         .get()
+        .apply { println("FIREBASE 6") }
         .documents
+        .apply { println("FIREBASE 7") }
         .firstOrNull()
+        .apply { println("FIREBASE 8") }
 
 internal inline val Long.isUserSignedIn: Boolean
     get() = userData != null
