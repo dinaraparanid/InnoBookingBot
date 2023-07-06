@@ -19,11 +19,6 @@ class MockUpTest {
         configureFirebase()
         val id = 800791305L
         assertEquals(id.isUserSignedIn, false);
-
-//        val store = Mockito.mock(FirestoreClient.getFirestore());
-//        Mockito.when(store.collection("users").whereEqualTo("tg_id", toString()).limit(1).get().get().documents.
-//        firstOrNull()).thenReturn(Long.);
-
     }
 
     @Test
