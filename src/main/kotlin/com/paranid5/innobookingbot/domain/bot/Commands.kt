@@ -99,12 +99,17 @@ private fun Dispatcher.configureSignInCommand(
     inputControls: MutableMap<ChatId, AtomicBoolean>
 ) = command(SIGN_IN_REQUEST) {
     update.consume()
+    println("SIGN IN")
 
     scope.launch(Dispatchers.IO) {
+        println("SIGN IN IO")
+
         if (telegramId.isUserSignedIn) {
             sendError("You are already signed in")
             return@launch
         }
+
+        println("INPUT SIGN IN")
 
         val inputController = inputControls.getOrPut(chatId, ::AtomicBoolean).apply { set(true) }
 
