@@ -1,7 +1,10 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     application
     kotlin("jvm") version "1.8.21"
     id("org.jetbrains.kotlin.plugin.serialization") version "1.8.21"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "com.paranid5"
@@ -71,6 +74,11 @@ val buildFatJar = task("buildFatJar", type = Jar::class) {
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
     exclude(listOf("META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA"))
     with(tasks.jar.get() as CopySpec)
+}
+
+tasks.withType<ShadowJar> {
+    mergeServiceFiles()
+    archiveFileName.set("InnoBookingBot.jar")
 }
 
 tasks {
