@@ -29,7 +29,7 @@ internal inline val Long.isUserSignedIn: Boolean
     get() = userData != null
 
 internal inline val Long.outlookEmail: String
-    get() = userData!!.id
+    get() = userData!!.get("id")!! as String
 
 fun addNewUserAsync(telegramId: Long, email: String) =
     FirestoreClient
