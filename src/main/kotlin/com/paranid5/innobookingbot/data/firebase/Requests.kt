@@ -1,7 +1,6 @@
 package com.paranid5.innobookingbot.data.firebase
 
 import com.google.firebase.cloud.FirestoreClient
-import java.security.SecureRandom
 import java.util.*
 import javax.mail.Authenticator
 import javax.mail.Message
@@ -10,6 +9,8 @@ import javax.mail.Session
 import javax.mail.Transport
 import javax.mail.internet.InternetAddress
 import javax.mail.internet.MimeMessage
+import kotlin.random.Random
+import kotlin.random.nextInt
 
 private const val COLLECTION_NAME = "users"
 
@@ -51,7 +52,7 @@ fun sendLoginEmail(email: String): Int {
 
     val subject = "Email confirmation for InnoBookingBot"
 
-    val authCode = SecureRandom.getInstanceStrong().nextInt(100, 1000000000);
+    val authCode = Random.nextInt(100..1000000000)
 
     val text = """
         Finish login process by sending next code to the bot with /login command:
