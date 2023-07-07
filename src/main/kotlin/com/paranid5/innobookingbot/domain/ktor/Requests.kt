@@ -40,7 +40,7 @@ internal suspend inline fun HttpClient.getMineBooksAsync(email: String) = corout
                 Json.encodeToString(
                     BookQueryRequest(
                         startedAtOrAfter = now,
-                        endedAtOrAfter = now + 3.days,
+                        endedAtOrBefore = now + 4.days,
                         ownerEmailIn = listOf(email)
                     )
                 )
