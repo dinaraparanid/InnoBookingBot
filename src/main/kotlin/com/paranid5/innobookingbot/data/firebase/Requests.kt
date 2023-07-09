@@ -14,7 +14,7 @@ import kotlin.random.nextInt
 
 private const val COLLECTION_NAME = "users"
 
-private inline val Long.userData
+internal inline val Long.userData
     get() = FirestoreClient
         .getFirestore()
         .collection(COLLECTION_NAME)
