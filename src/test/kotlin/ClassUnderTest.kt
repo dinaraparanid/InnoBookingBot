@@ -1,15 +1,9 @@
-import com.github.kotlintelegrambot.bot
-import com.paranid5.innobookingbot.domain.bot.configureCommands
-import com.github.kotlintelegrambot.dispatch
-import io.ktor.client.*
-
+import com.paranid5.innobookingbot.data.firebase.configureFirebase
+import com.paranid5.innobookingbot.data.firebase.isUserSignedIn
+import com.paranid5.innobookingbot.data.firebase.sendLoginEmail
+import com.paranid5.innobookingbot.data.firebase.userData
 import kotlin.test.Test
-
-
-import com.paranid5.innobookingbot.data.firebase.*
 import kotlin.test.assertEquals
-
-
 
 class MockUpTest {
     private val userEmail: String = "n.petukhov@innopolis.university"
@@ -35,16 +29,14 @@ class MockUpTest {
 
     @Test
     fun test4() {
-        val user_id = 753442299;
+        val userID = 753442299;
         val id = 753442299L;
-        assertEquals(id.userData!!.get("tg_id"), user_id.toString());
+        assertEquals(id.userData!!.get("tg_id"), userID.toString());
     }
-
 
     @Test
     fun verifyEmailSent() {
         val num = sendLoginEmail(userEmail);
         assertEquals(num, num);
     }
-
 }
