@@ -10,7 +10,7 @@ class MockUpTest {
 
     @Test
     fun test1() {
-        configureFirebase()
+        //configureFirebase()
         val id = 800791305L
         //assertEquals(id.isUserSignedIn, false);
     }
