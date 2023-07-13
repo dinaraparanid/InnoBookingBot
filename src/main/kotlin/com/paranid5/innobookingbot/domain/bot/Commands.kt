@@ -10,10 +10,7 @@ import com.paranid5.innobookingbot.data.BookRequest
 import com.paranid5.innobookingbot.data.BookResponse
 import com.paranid5.innobookingbot.data.BookTimePeriod
 import com.paranid5.innobookingbot.data.Room
-import com.paranid5.innobookingbot.data.extensions.joinedString
-import com.paranid5.innobookingbot.data.extensions.joinedToMessage
-import com.paranid5.innobookingbot.data.extensions.successfulBookingMessage
-import com.paranid5.innobookingbot.data.extensions.toInstantOrNull
+import com.paranid5.innobookingbot.data.extensions.*
 import com.paranid5.innobookingbot.data.firebase.addNewUserAsync
 import com.paranid5.innobookingbot.data.firebase.isUserSignedIn
 import com.paranid5.innobookingbot.data.firebase.outlookEmail
@@ -24,10 +21,10 @@ import io.ktor.http.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 private const val START_REQUEST = "start"
@@ -74,13 +71,23 @@ fun Dispatcher.configureCommands(ktorClient: HttpClient) {
     }
 }
 
-private suspend inline fun CommandHandlerEnvironment.launchNotificationHandling(bookRequest: BookRequest) =
-    coroutineScope {
-        launch(Dispatchers.IO) {
-            delay(bookRequest.end - 5.minutes - Clock.System.now())
-            sendBookEndSoon(bookRequest.title)
-        }
+private suspend inline fun CommandHandlerEnvironment.launchNotificationHandling(
+    bookEndNotificationTasks: MutableMap<String, Job>,
+    id: String,
+    bookRequest: BookRequest
+) = coroutineScope {
+    val task = launch(Dispatchers.IO) {
+        val delayTime = maxOf(bookRequest.end - 5.minutes - currentLocalTime, Duration.ZERO)
+        println(delayTime)
+        delay(delayTime)
+
+        sendBookEndSoon(bookRequest.title)
+        bookEndNotificationTasks.remove(id)
     }
+
+    bookEndNotificationTasks.putIfAbsent(id, task)
+    task
+}
 
 private fun Dispatcher.configureStartCommand() =
     command(START_REQUEST) {
@@ -239,8 +246,13 @@ private fun Dispatcher.configureBookRequest(
                 .await()
         ) {
             is Either.Left -> {
-                sendBookingResponse(result.value)
-                bookEndNotificationTasks[result.value.id] = launchNotificationHandling(bookRequest)
+                sendBookingResponse(bookingResponse = result.value)
+
+                launchNotificationHandling(
+                    bookEndNotificationTasks,
+                    result.value.id,
+                    bookRequest
+                )
             }
 
             is Either.Right -> sendError(result.value)
@@ -381,7 +393,7 @@ private fun CommandHandlerEnvironment.sendNotSignedInError() =
     sendError("You have not confirmed your email. Please, use /sign_in first")
 
 private fun CommandHandlerEnvironment.sendBookEndSoon(bookTitle: String) =
-    sendMessage("Remainder: your booking $bookTitle is about to end in five minutes")
+    sendMessage("Remainder: your booking `$bookTitle` is about to end in five minutes")
 
 private fun CommandHandlerEnvironment.sendError(statusCode: HttpStatusCode) = when (statusCode) {
     HttpStatusCode.BadRequest -> sendCannotBookError()
