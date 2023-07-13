@@ -21,14 +21,14 @@ import com.paranid5.innobookingbot.data.firebase.sendLoginEmail
 import com.paranid5.innobookingbot.domain.ktor.*
 import io.ktor.client.*
 import io.ktor.http.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration.Companion.minutes
 
 private const val START_REQUEST = "start"
 private const val SIGN_IN_REQUEST = "sign_in"
@@ -53,15 +53,16 @@ private inline val newMessageChannel
 fun Dispatcher.configureCommands(ktorClient: HttpClient) {
     val messageChannels = ConcurrentHashMap<ChatId, Channel<String>>()
     val inputControls = ConcurrentHashMap<ChatId, AtomicBoolean>()
+    val bookEndNotificationTasks = ConcurrentHashMap<String, Job>()
 
     configureStartCommand()
     configureSignInCommand(messageChannels, inputControls)
     configureRoomsCommand(ktorClient)
     configureFreeRoomsCommand(ktorClient, messageChannels, inputControls)
     configureMineRequest(ktorClient)
-    configureBookRequest(ktorClient, messageChannels, inputControls)
+    configureBookRequest(ktorClient, messageChannels, inputControls, bookEndNotificationTasks)
     configureQueryRequest(ktorClient, messageChannels, inputControls)
-    configureCancelRequest(ktorClient, messageChannels, inputControls)
+    configureCancelRequest(ktorClient, messageChannels, inputControls, bookEndNotificationTasks)
     configureRulesCommand()
 
     text {
@@ -72,6 +73,14 @@ fun Dispatcher.configureCommands(ktorClient: HttpClient) {
             messageChannels.getOrPut(chatId, ::newMessageChannel).send(text)
     }
 }
+
+private suspend inline fun CommandHandlerEnvironment.launchNotificationHandling(bookRequest: BookRequest) =
+    coroutineScope {
+        launch(Dispatchers.IO) {
+            delay(bookRequest.end - 5.minutes - Clock.System.now())
+            sendBookEndSoon(bookRequest.title)
+        }
+    }
 
 private fun Dispatcher.configureStartCommand() =
     command(START_REQUEST) {
@@ -194,7 +203,8 @@ private fun Dispatcher.configureMineRequest(ktorClient: HttpClient) =
 private fun Dispatcher.configureBookRequest(
     ktorClient: HttpClient,
     messageChannels: MutableMap<ChatId, Channel<String>>,
-    inputControls: MutableMap<ChatId, AtomicBoolean>
+    inputControls: MutableMap<ChatId, AtomicBoolean>,
+    bookEndNotificationTasks: MutableMap<String, Job>
 ) = command(BOOK_REQUEST) {
     update.consume()
 
@@ -221,15 +231,18 @@ private fun Dispatcher.configureBookRequest(
         val roomId = getBookRoomId(chatId, messageChannels)
         inputController.set(false)
 
+        val bookRequest = BookRequest(title, start, end, email)
+
         when (
             val result = ktorClient
-                .bookRoomAsync(
-                    roomId = roomId,
-                    bookRequest = BookRequest(title, start, end, email)
-                )
+                .bookRoomAsync(roomId, bookRequest)
                 .await()
         ) {
-            is Either.Left -> sendBookingResponse(result.value)
+            is Either.Left -> {
+                sendBookingResponse(result.value)
+                bookEndNotificationTasks[result.value.id] = launchNotificationHandling(bookRequest)
+            }
+
             is Either.Right -> sendError(result.value)
         }
     }
@@ -267,7 +280,8 @@ private fun Dispatcher.configureQueryRequest(
 private fun Dispatcher.configureCancelRequest(
     ktorClient: HttpClient,
     messageChannels: MutableMap<ChatId, Channel<String>>,
-    inputControls: MutableMap<ChatId, AtomicBoolean>
+    inputControls: MutableMap<ChatId, AtomicBoolean>,
+    bookEndNotificationTasks: MutableMap<String, Job>
 ) = command(CANCEL_REQUEST) {
     update.consume()
 
@@ -284,8 +298,10 @@ private fun Dispatcher.configureCancelRequest(
 
         sendMessage(
             when {
-                cancelStatus.isSuccess() ->
+                cancelStatus.isSuccess() -> {
+                    bookEndNotificationTasks.remove(bookId)
                     "Booking $bookId is successfully canceled"
+                }
 
                 else -> "Error ${cancelStatus.value}: ${cancelStatus.description}"
             }
@@ -363,6 +379,9 @@ private fun CommandHandlerEnvironment.sendCannotBookError() =
 
 private fun CommandHandlerEnvironment.sendNotSignedInError() =
     sendError("You have not confirmed your email. Please, use /sign_in first")
+
+private fun CommandHandlerEnvironment.sendBookEndSoon(bookTitle: String) =
+    sendMessage("Remainder: your booking $bookTitle is about to end in five minutes")
 
 private fun CommandHandlerEnvironment.sendError(statusCode: HttpStatusCode) = when (statusCode) {
     HttpStatusCode.BadRequest -> sendCannotBookError()
