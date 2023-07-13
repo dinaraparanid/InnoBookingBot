@@ -6,7 +6,7 @@ import io.github.cdimascio.dotenv.dotenv
 import io.ktor.client.*
 
 fun InnoBookingBot(ktorClient: HttpClient) = bot {
-    token = dotenv()["BOT_TOKEN"]
+    token = System.getenv("BOT_TOKEN")
 
     dispatch {
         configureCommands(ktorClient)
