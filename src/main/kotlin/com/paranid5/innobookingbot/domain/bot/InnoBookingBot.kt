@@ -7,8 +7,8 @@ import io.ktor.client.*
 import kotlinx.coroutines.Job
 
 fun InnoBookingBot(ktorClient: HttpClient, bookEndNotificationTasks: MutableMap<String, Job>) = bot {
-    val env = dotenv()
-    token = env["BOT_TOKEN"]
+    val env = System.getenv()
+    token = env["BOT_TOKEN"]!!
 
     dispatch {
         configureCommands(ktorClient, bookEndNotificationTasks)
