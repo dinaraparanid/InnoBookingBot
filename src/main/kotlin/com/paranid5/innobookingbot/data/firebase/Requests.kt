@@ -1,6 +1,7 @@
 package com.paranid5.innobookingbot.data.firebase
 
 import com.google.firebase.cloud.FirestoreClient
+import io.github.cdimascio.dotenv.dotenv
 import java.util.*
 import javax.mail.Authenticator
 import javax.mail.Message
@@ -30,6 +31,12 @@ internal inline val Long.isUserSignedIn: Boolean
 
 internal inline val Long.outlookEmail: String
     get() = userData!!.get("id")!! as String
+
+internal inline val allUsersAsync
+    get() = FirestoreClient
+        .getFirestore()
+        .collection(COLLECTION_NAME)
+        .get()
 
 fun addNewUserAsync(telegramId: Long, email: String) =
     FirestoreClient

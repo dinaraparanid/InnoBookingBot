@@ -47,10 +47,9 @@ private inline val newMessageChannel
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
-fun Dispatcher.configureCommands(ktorClient: HttpClient) {
+fun Dispatcher.configureCommands(ktorClient: HttpClient, bookEndNotificationTasks: MutableMap<String, Job>) {
     val messageChannels = ConcurrentHashMap<ChatId, Channel<String>>()
     val inputControls = ConcurrentHashMap<ChatId, AtomicBoolean>()
-    val bookEndNotificationTasks = ConcurrentHashMap<String, Job>()
 
     configureStartCommand()
     configureSignInCommand(messageChannels, inputControls)
@@ -85,7 +84,7 @@ private suspend inline fun CommandHandlerEnvironment.launchNotificationHandling(
         bookEndNotificationTasks.remove(id)
     }
 
-    bookEndNotificationTasks.putIfAbsent(id, task)
+    bookEndNotificationTasks[id] = task
     task
 }
 
