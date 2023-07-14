@@ -14,7 +14,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 
-internal suspend inline fun Bot.fetchNotifications(ktorClient: HttpClient): Map<String, Job> = coroutineScope {
+internal suspend inline fun Bot.fetchNotifications(ktorClient: HttpClient) = coroutineScope {
     val bookEndNotificationTasks = ConcurrentHashMap<String, Job>()
     val start = currentLocalTime
     val end = currentLocalTime + 7.days
@@ -24,46 +24,50 @@ internal suspend inline fun Bot.fetchNotifications(ktorClient: HttpClient): Map<
         .bookFilter(start, end)
         .await()
         .mapLeft { bookings ->
-            bookEndNotificationTasks.putAll(
-                bookings.mapNotNull { (id, title, _, bookEnd, _, ownerEmail) ->
-                    emailsToTgIds[ownerEmail]
-                        ?.let(String::toLongOrNull)
-                        ?.let(ChatId::fromId)
-                        ?.let {
-                            launchNotificationHandling(
-                                bookEndNotificationTasks = bookEndNotificationTasks,
-                                chatId = it,
-                                id = id,
-                                bookEnd = bookEnd,
-                                bookTitle = title
-                            )
-                        }
-                        ?.let { id to it }
-                }
-            )
+            coroutineScope {
+                bookEndNotificationTasks.putAll(
+                    bookings.onEach(::println).mapNotNull { (id, title, _, bookEnd, _, ownerEmail) ->
+                        emailsToTgIds[ownerEmail]
+                            ?.let(String::toLongOrNull)
+                            ?.let(ChatId::fromId)
+                            ?.let {
+                                launchNotificationHandling(
+                                    bot = this@fetchNotifications,
+                                    bookEndNotificationTasks = bookEndNotificationTasks,
+                                    chatId = it,
+                                    id = id,
+                                    bookEnd = bookEnd,
+                                    bookTitle = title
+                                )
+                            }
+                            ?.let { id to it }
+                    }
+                )
+            }
         }
 
     bookEndNotificationTasks
 }
 
-private suspend inline fun Bot.launchNotificationHandling(
+private suspend inline fun CoroutineScope.launchNotificationHandling(
+    bot: Bot,
     bookEndNotificationTasks: MutableMap<String, Job>,
     chatId: ChatId,
     id: String,
     bookEnd: Instant,
     bookTitle: String
-) = coroutineScope {
+): Job {
     val task = launch(Dispatchers.IO) {
         val delayTime = maxOf(bookEnd - 5.minutes - currentLocalTime, Duration.ZERO)
         println("Delay before $bookTitle ($bookEnd): $delayTime")
         delay(delayTime)
 
-        sendBookEndSoon(chatId, bookTitle)
+        bot.sendBookEndSoon(chatId, bookTitle)
         bookEndNotificationTasks.remove(id)
     }
 
     bookEndNotificationTasks[id] = task
-    task
+    return task
 }
 
 private fun Bot.sendBookEndSoon(chatId: ChatId, bookTitle: String) =

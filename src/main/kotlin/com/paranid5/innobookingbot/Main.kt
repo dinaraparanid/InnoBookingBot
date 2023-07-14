@@ -14,10 +14,10 @@ fun main() = runBlocking {
     configureFirebase()
 
     val ktorClient = KtorClient()
-    val bookEndNotificationTasks = ConcurrentHashMap<String, Job>()
+    var bookEndNotificationTasks = ConcurrentHashMap<String, Job>()
 
     InnoBookingBot(ktorClient, bookEndNotificationTasks).run {
-        launch(Dispatchers.IO) { bookEndNotificationTasks.putAll(fetchNotifications(ktorClient)) }
+        bookEndNotificationTasks = fetchNotifications(ktorClient)
         startPolling()
     }
 }

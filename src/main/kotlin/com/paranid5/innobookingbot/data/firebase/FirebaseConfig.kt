@@ -7,7 +7,7 @@ import io.github.cdimascio.dotenv.dotenv
 import java.io.FileInputStream
 
 fun configureFirebase() {
-    val env = System.getenv()
+    val env = dotenv()
     val credentialsPath = env["CREDENTIALS_PATH"]!!
     val databaseUrl = env["DATABASE_URL"]!!
     val projectId = env["PROJECT_ID"]!!
