@@ -14,7 +14,10 @@ internal fun CoroutineScope.NotificationServer(
     ktorClient: HttpClient,
     bookEndNotificationTasks: MutableMap<String, Job>
 ) = launch(Dispatchers.IO) {
-    embeddedServer(Netty, port = 1337, host = "0.0.0.0") {
+    val env = System.getenv()
+    val port = env["PORT"]!!.toInt()
+
+    embeddedServer(Netty, port = port, host = "0.0.0.0") {
         module(bot, ktorClient, bookEndNotificationTasks)
     }.start(wait = true)
 }
