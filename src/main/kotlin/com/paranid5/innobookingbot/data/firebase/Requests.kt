@@ -452,7 +452,7 @@ fun EmailPage(name: String, code: Int) =
                                                                     <td align="center" style="padding:0;Margin:0;font-size:0px">
                                                                         <p
                                                                            style="mso-line-height-rule:exactly;text-decoration:underline;color:#2D3142;font-size:14px"><img
-                                                                                src="https://i.ibb.co/xH7gdbD/logo.png"
+                                                                                src="https://i.ibb.co/NNccRRx/logo.png"
                                                                                 alt="Logo"
                                                                                 style="display:block;font-size:18px;border:0;outline:none;text-decoration:none"
                                                                                 height="60" title="Logo"></p></td>
