@@ -130,7 +130,7 @@ private fun Dispatcher.configureSignInCommand(
             return@launch
         }
 
-        val correctAuthCode = sendLoginEmail(email)
+        val correctAuthCode = sendLoginEmail(name = message.from!!.firstName, email = email)
 
         val inputAuthCode = getEmailAuthCodeOrSendError(chatId, messageChannels) ?: run {
             inputController.set(false)
