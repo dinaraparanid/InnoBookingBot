@@ -50,7 +50,7 @@ fun addNewUserAsync(telegramId: Long, email: String) =
         )
 
 fun sendLoginEmail(email: String): Int {
-    val env = dotenv()
+    val env = System.getenv()
 
     val userName = env["EMAIL_AUTH"]!!
     val password = env["EMAIL_AUTH_PASSWORD"]!!
