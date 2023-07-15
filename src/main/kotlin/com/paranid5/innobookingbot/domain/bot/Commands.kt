@@ -47,19 +47,12 @@ private inline val newMessageChannel
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
-fun Dispatcher.configureCommands(ktorClient: HttpClient, bookEndNotificationTasks: MutableMap<String, Job>) {
+fun Dispatcher.configureCommands() {
     val messageChannels = ConcurrentHashMap<ChatId, Channel<String>>()
     val inputControls = ConcurrentHashMap<ChatId, AtomicBoolean>()
 
     configureStartCommand()
     configureSignInCommand(messageChannels, inputControls)
-    configureRoomsCommand(ktorClient)
-    configureFreeRoomsCommand(ktorClient, messageChannels, inputControls)
-    configureMineRequest(ktorClient)
-    configureBookRequest(ktorClient, messageChannels, inputControls, bookEndNotificationTasks)
-    configureQueryRequest(ktorClient, messageChannels, inputControls)
-    //configureCancelRequest(ktorClient, messageChannels, inputControls, bookEndNotificationTasks)
-    configureRulesCommand()
 
     text {
         update.consume()
@@ -96,21 +89,14 @@ private fun Dispatcher.configureStartCommand() =
             """
                 Hello, ${message.chat.firstName}! I am Inno Booking Bot!
                 I can help you to book available study rooms in Innopolis University.
-                
+
                 To start booking, please, /sign_in with your Innopolis (Outlook) email.
                 To book a room, click on 'Book room' button below.
-
-                Alternatively, I can do the following things:
-                /sign_in - login with your innopolis email
-                /rooms - show all bookable rooms
-                /free - show all free rooms at the specified time period
-                /mine - show all your actual bookings
-                /book - book any available room
-                /rules - show booking rules, accepted by the University
             """.trimIndent()
         )
     }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 private fun Dispatcher.configureSignInCommand(
     messageChannels: MutableMap<ChatId, Channel<String>>,
     inputControls: MutableMap<ChatId, AtomicBoolean>
@@ -121,6 +107,11 @@ private fun Dispatcher.configureSignInCommand(
         if (telegramId.isUserSignedIn) {
             sendAlreadySignedInError()
             return@launch
+        }
+
+        messageChannels.get(chatId)?.let { chan ->
+            while (!chan.isEmpty)
+                chan.receive()
         }
 
         val inputController = inputControls.getOrPut(chatId, ::AtomicBoolean).apply { set(true) }
@@ -148,6 +139,7 @@ private fun Dispatcher.configureSignInCommand(
     }
 }
 
+@Deprecated("Available in WebApp")
 private fun Dispatcher.configureRoomsCommand(ktorClient: HttpClient) =
     command(ROOMS_REQUEST) {
         update.consume()
@@ -165,6 +157,7 @@ private fun Dispatcher.configureRoomsCommand(ktorClient: HttpClient) =
         }
     }
 
+@Deprecated("Available in WebApp")
 private fun Dispatcher.configureFreeRoomsCommand(
     ktorClient: HttpClient,
     messageChannels: MutableMap<ChatId, Channel<String>>,
@@ -194,6 +187,7 @@ private fun Dispatcher.configureFreeRoomsCommand(
     }
 }
 
+@Deprecated("Available in WebApp")
 private fun Dispatcher.configureMineRequest(ktorClient: HttpClient) =
     command(MINE_REQUEST) {
         update.consume()
@@ -213,6 +207,7 @@ private fun Dispatcher.configureMineRequest(ktorClient: HttpClient) =
         }
     }
 
+@Deprecated("Available in WebApp")
 private fun Dispatcher.configureBookRequest(
     ktorClient: HttpClient,
     messageChannels: MutableMap<ChatId, Channel<String>>,
@@ -266,6 +261,7 @@ private fun Dispatcher.configureBookRequest(
     }
 }
 
+@Deprecated("Available in WebApp")
 private fun Dispatcher.configureQueryRequest(
     ktorClient: HttpClient,
     messageChannels: MutableMap<ChatId, Channel<String>>,
@@ -295,7 +291,7 @@ private fun Dispatcher.configureQueryRequest(
     }
 }
 
-@Deprecated("Not safe to use")
+@Deprecated("Available in WebApp")
 private fun Dispatcher.configureCancelRequest(
     ktorClient: HttpClient,
     messageChannels: MutableMap<ChatId, Channel<String>>,
@@ -328,6 +324,7 @@ private fun Dispatcher.configureCancelRequest(
     }
 }
 
+@Deprecated("Available in WebApp")
 private fun Dispatcher.configureRulesCommand() =
     command(RULES_REQUEST) {
         update.consume()

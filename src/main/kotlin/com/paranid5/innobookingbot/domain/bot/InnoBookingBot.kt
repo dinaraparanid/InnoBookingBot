@@ -6,11 +6,8 @@ import io.github.cdimascio.dotenv.dotenv
 import io.ktor.client.*
 import kotlinx.coroutines.Job
 
-fun InnoBookingBot(ktorClient: HttpClient, bookEndNotificationTasks: MutableMap<String, Job>) = bot {
+fun InnoBookingBot() = bot {
     val env = System.getenv()
     token = env["BOT_TOKEN"]!!
-
-    dispatch {
-        configureCommands(ktorClient, bookEndNotificationTasks)
-    }
+    dispatch { configureCommands() }
 }
