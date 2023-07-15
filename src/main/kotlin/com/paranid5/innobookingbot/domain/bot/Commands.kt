@@ -58,7 +58,7 @@ fun Dispatcher.configureCommands(ktorClient: HttpClient, bookEndNotificationTask
     configureMineRequest(ktorClient)
     configureBookRequest(ktorClient, messageChannels, inputControls, bookEndNotificationTasks)
     configureQueryRequest(ktorClient, messageChannels, inputControls)
-    configureCancelRequest(ktorClient, messageChannels, inputControls, bookEndNotificationTasks)
+    //configureCancelRequest(ktorClient, messageChannels, inputControls, bookEndNotificationTasks)
     configureRulesCommand()
 
     text {
@@ -96,14 +96,16 @@ private fun Dispatcher.configureStartCommand() =
             """
                 Hello, ${message.chat.firstName}! I am Inno Booking Bot!
                 I can help you to book available study rooms in Innopolis University.
+                
+                To start booking, please, /sign_in with your Innopolis (Outlook) email.
+                To book a room, click on 'Book room' button below.
 
-                I can do the following things:
+                Alternatively, I can do the following things:
                 /sign_in - login with your innopolis email
                 /rooms - show all bookable rooms
                 /free - show all free rooms at the specified time period
                 /mine - show all your actual bookings
                 /book - book any available room
-                /cancel - cancel booking
                 /rules - show booking rules, accepted by the University
             """.trimIndent()
         )
@@ -117,7 +119,7 @@ private fun Dispatcher.configureSignInCommand(
 
     scope.launch(Dispatchers.IO) {
         if (telegramId.isUserSignedIn) {
-            sendError("You are already signed in")
+            sendAlreadySignedInError()
             return@launch
         }
 
@@ -195,6 +197,11 @@ private fun Dispatcher.configureFreeRoomsCommand(
 private fun Dispatcher.configureMineRequest(ktorClient: HttpClient) =
     command(MINE_REQUEST) {
         update.consume()
+
+        if (!telegramId.isUserSignedIn) {
+            sendNotSignedInError()
+            return@command
+        }
 
         when (
             val result = ktorClient
@@ -288,6 +295,7 @@ private fun Dispatcher.configureQueryRequest(
     }
 }
 
+@Deprecated("Not safe to use")
 private fun Dispatcher.configureCancelRequest(
     ktorClient: HttpClient,
     messageChannels: MutableMap<ChatId, Channel<String>>,
@@ -393,6 +401,9 @@ private fun CommandHandlerEnvironment.sendNotSignedInError() =
 
 private fun CommandHandlerEnvironment.sendBookEndSoon(bookTitle: String) =
     sendMessage("Remainder: your booking `$bookTitle` is about to end in five minutes")
+
+private fun CommandHandlerEnvironment.sendAlreadySignedInError() =
+    sendError("You are already signed in")
 
 private fun CommandHandlerEnvironment.sendError(statusCode: HttpStatusCode) = when (statusCode) {
     HttpStatusCode.BadRequest -> sendCannotBookError()

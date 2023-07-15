@@ -9,11 +9,13 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.*
 
-internal fun CoroutineScope.NotificationServer(
+private val notificationServerScope = CoroutineScope(Dispatchers.IO)
+
+internal fun NotificationServer(
     bot: Bot,
     ktorClient: HttpClient,
     bookEndNotificationTasks: MutableMap<String, Job>
-) = launch(Dispatchers.IO) {
+) = notificationServerScope.launch(Dispatchers.IO) {
     val env = System.getenv()
     val port = env["PORT"]!!.toInt()
 
