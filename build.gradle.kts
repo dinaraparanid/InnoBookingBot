@@ -24,6 +24,12 @@ dependencies {
     implementation("io.ktor:ktor-client-logging:2.3.1")
     implementation("io.ktor:ktor-client-cio-jvm:2.3.1")
     implementation("io.ktor:ktor-client-content-negotiation:2.3.1")
+    implementation("io.ktor:ktor-server-core-jvm:2.3.1")
+    implementation("io.ktor:ktor-server-cors-jvm:2.3.1")
+    implementation("io.ktor:ktor-server-compression-jvm:2.3.1")
+    implementation("io.ktor:ktor-server-content-negotiation-jvm:2.3.1")
+    implementation("io.ktor:ktor-server-netty-jvm:2.3.1")
+    implementation("io.ktor:ktor-server-cors:2.3.1")
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.1")
     implementation("io.ktor:ktor-network:2.3.1")
 

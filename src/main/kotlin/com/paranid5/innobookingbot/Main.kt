@@ -4,10 +4,8 @@ import com.paranid5.innobookingbot.data.firebase.configureFirebase
 import com.paranid5.innobookingbot.domain.bot.InnoBookingBot
 import com.paranid5.innobookingbot.domain.bot.fetchNotifications
 import com.paranid5.innobookingbot.domain.ktor.KtorClient
-import com.paranid5.innobookingbot.domain.ktor.NotificationServer
-import kotlinx.coroutines.Dispatchers
+import com.paranid5.innobookingbot.domain.ktor.notifications.NotificationServer
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.ConcurrentHashMap
 
