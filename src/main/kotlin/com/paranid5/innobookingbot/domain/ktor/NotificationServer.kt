@@ -15,7 +15,7 @@ internal suspend inline fun NotificationServer(
     bookEndNotificationTasks: MutableMap<String, Job>
 ) = coroutineScope {
     val server = aSocket(ActorSelectorManager(Dispatchers.IO)).tcp()
-        .bind("https://innobookingbot-production.up.railway.app", 1337)
+        .bind("0.0.0.0", 1337)
 
     server.accept().use { socket ->
         while (true) {
