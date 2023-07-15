@@ -4,6 +4,7 @@ import com.paranid5.innobookingbot.data.firebase.configureFirebase
 import com.paranid5.innobookingbot.domain.bot.InnoBookingBot
 import com.paranid5.innobookingbot.domain.bot.fetchNotifications
 import com.paranid5.innobookingbot.domain.ktor.KtorClient
+import com.paranid5.innobookingbot.domain.ktor.NotificationServer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -14,10 +15,11 @@ fun main() = runBlocking {
     configureFirebase()
 
     val ktorClient = KtorClient()
-    var bookEndNotificationTasks = ConcurrentHashMap<String, Job>()
+    val bookEndNotificationTasks = ConcurrentHashMap<String, Job>()
 
     InnoBookingBot(ktorClient, bookEndNotificationTasks).run {
-        bookEndNotificationTasks = fetchNotifications(ktorClient)
+        fetchNotifications(ktorClient, bookEndNotificationTasks)
+        NotificationServer(bot = this, ktorClient, bookEndNotificationTasks)
         startPolling()
     }
 }

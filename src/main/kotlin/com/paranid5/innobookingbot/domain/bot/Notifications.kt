@@ -9,13 +9,14 @@ import com.paranid5.innobookingbot.domain.ktor.bookFilter
 import io.ktor.client.*
 import kotlinx.coroutines.*
 import kotlinx.datetime.Instant
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 
-internal suspend inline fun Bot.fetchNotifications(ktorClient: HttpClient) = coroutineScope {
-    val bookEndNotificationTasks = ConcurrentHashMap<String, Job>()
+internal suspend inline fun Bot.fetchNotifications(
+    ktorClient: HttpClient,
+    bookEndNotificationTasks: MutableMap<String, Job>
+) = coroutineScope {
     val start = currentLocalTime
     val end = currentLocalTime + 7.days
     val emailsToTgIds = allUsersAsync.get().documents.emailsToTgIds
@@ -25,24 +26,22 @@ internal suspend inline fun Bot.fetchNotifications(ktorClient: HttpClient) = cor
         .await()
         .mapLeft { bookings ->
             coroutineScope {
-                bookEndNotificationTasks.putAll(
-                    bookings.onEach(::println).mapNotNull { (id, title, _, bookEnd, _, ownerEmail) ->
-                        emailsToTgIds[ownerEmail]
-                            ?.let(String::toLongOrNull)
-                            ?.let(ChatId::fromId)
-                            ?.let {
-                                launchNotificationHandling(
-                                    bot = this@fetchNotifications,
-                                    bookEndNotificationTasks = bookEndNotificationTasks,
-                                    chatId = it,
-                                    id = id,
-                                    bookEnd = bookEnd,
-                                    bookTitle = title
-                                )
-                            }
-                            ?.let { id to it }
-                    }
-                )
+                bookings.onEach(::println).mapNotNull { (id, title, _, bookEnd, _, ownerEmail) ->
+                    emailsToTgIds[ownerEmail]
+                        ?.let(String::toLongOrNull)
+                        ?.let(ChatId::fromId)
+                        ?.let {
+                            launchNotificationHandling(
+                                bot = this@fetchNotifications,
+                                bookEndNotificationTasks = bookEndNotificationTasks,
+                                chatId = it,
+                                id = id,
+                                bookEnd = bookEnd,
+                                bookTitle = title
+                            )
+                        }
+                        ?.let { id to it }
+                }.forEach { (id, task) -> bookEndNotificationTasks.putIfAbsent(id, task) }
             }
         }
 
