@@ -5,24 +5,24 @@ import com.paranid5.innobookingbot.domain.bot.fetchNotifications
 import io.ktor.client.*
 import io.ktor.network.selector.*
 import io.ktor.network.sockets.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
-internal suspend inline fun NotificationServer(
+internal suspend inline fun CoroutineScope.NotificationServer(
     bot: Bot,
     ktorClient: HttpClient,
     bookEndNotificationTasks: MutableMap<String, Job>
-) = coroutineScope {
-    val server = aSocket(ActorSelectorManager(Dispatchers.IO)).tcp()
+) = launch(Dispatchers.IO) {
+    aSocket(ActorSelectorManager(Dispatchers.IO)).tcp()
         .bind("0.0.0.0", 1337)
-
-    server.accept().use { socket ->
-        while (true) {
-            if (socket.openReadChannel().readByte() == byteArrayOf(57).first()) {
-                println("New booking received from WebApp")
-                bot.fetchNotifications(ktorClient, bookEndNotificationTasks)
+        .accept().use { socket ->
+            while (true) {
+                if (socket.openReadChannel().readByte() == byteArrayOf(57).first()) {
+                    println("New booking received from WebApp")
+                    fetchNotifications(bot, ktorClient, bookEndNotificationTasks)
+                }
             }
         }
-    }
 }

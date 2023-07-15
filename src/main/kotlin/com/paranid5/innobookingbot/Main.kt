@@ -18,7 +18,7 @@ fun main() = runBlocking {
     val bookEndNotificationTasks = ConcurrentHashMap<String, Job>()
 
     InnoBookingBot(ktorClient, bookEndNotificationTasks).run {
-        fetchNotifications(ktorClient, bookEndNotificationTasks)
+        fetchNotifications(bot = this, ktorClient, bookEndNotificationTasks)
         NotificationServer(bot = this, ktorClient, bookEndNotificationTasks)
         startPolling()
     }

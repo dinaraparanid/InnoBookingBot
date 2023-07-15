@@ -13,10 +13,11 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 
-internal suspend inline fun Bot.fetchNotifications(
+internal suspend inline fun CoroutineScope.fetchNotifications(
+    bot: Bot,
     ktorClient: HttpClient,
     bookEndNotificationTasks: MutableMap<String, Job>
-) = coroutineScope {
+) {
     val start = currentLocalTime
     val end = currentLocalTime + 7.days
     val emailsToTgIds = allUsersAsync.get().documents.emailsToTgIds
@@ -25,27 +26,23 @@ internal suspend inline fun Bot.fetchNotifications(
         .bookFilter(start, end)
         .await()
         .mapLeft { bookings ->
-            coroutineScope {
-                bookings.onEach(::println).mapNotNull { (id, title, _, bookEnd, _, ownerEmail) ->
-                    emailsToTgIds[ownerEmail]
-                        ?.let(String::toLongOrNull)
-                        ?.let(ChatId::fromId)
-                        ?.let {
-                            launchNotificationHandling(
-                                bot = this@fetchNotifications,
-                                bookEndNotificationTasks = bookEndNotificationTasks,
-                                chatId = it,
-                                id = id,
-                                bookEnd = bookEnd,
-                                bookTitle = title
-                            )
-                        }
-                        ?.let { id to it }
-                }.forEach { (id, task) -> bookEndNotificationTasks.putIfAbsent(id, task) }
-            }
+            bookings.onEach(::println).mapNotNull { (id, title, _, bookEnd, _, ownerEmail) ->
+                emailsToTgIds[ownerEmail]
+                    ?.let(String::toLongOrNull)
+                    ?.let(ChatId::fromId)
+                    ?.let {
+                        launchNotificationHandling(
+                            bot = bot,
+                            bookEndNotificationTasks = bookEndNotificationTasks,
+                            chatId = it,
+                            id = id,
+                            bookEnd = bookEnd,
+                            bookTitle = title
+                        )
+                    }
+                    ?.let { id to it }
+            }.forEach { (id, task) -> bookEndNotificationTasks.putIfAbsent(id, task) }
         }
-
-    bookEndNotificationTasks
 }
 
 private suspend inline fun CoroutineScope.launchNotificationHandling(
