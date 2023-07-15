@@ -50,9 +50,10 @@ private inline val newMessageChannel
 fun Dispatcher.configureCommands() {
     val messageChannels = ConcurrentHashMap<ChatId, Channel<String>>()
     val inputControls = ConcurrentHashMap<ChatId, AtomicBoolean>()
+    val usersToTasks = ConcurrentHashMap<ChatId, Job?>()
 
     configureStartCommand()
-    configureSignInCommand(messageChannels, inputControls)
+    configureSignInCommand(messageChannels, inputControls, usersToTasks)
 
     text {
         update.consume()
@@ -99,17 +100,20 @@ private fun Dispatcher.configureStartCommand() =
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun Dispatcher.configureSignInCommand(
     messageChannels: MutableMap<ChatId, Channel<String>>,
-    inputControls: MutableMap<ChatId, AtomicBoolean>
+    inputControls: MutableMap<ChatId, AtomicBoolean>,
+    usersToTasks: MutableMap<ChatId, Job?>
 ) = command(SIGN_IN_REQUEST) {
     update.consume()
 
-    scope.launch(Dispatchers.IO) {
+    usersToTasks[chatId]?.cancel(CancellationException("New command received"))
+
+    usersToTasks[chatId] = scope.launch(Dispatchers.IO) {
         if (telegramId.isUserSignedIn) {
             sendAlreadySignedInError()
             return@launch
         }
 
-        messageChannels.get(chatId)?.let { chan ->
+        messageChannels[chatId]?.let { chan ->
             while (!chan.isEmpty)
                 chan.receive()
         }
@@ -123,7 +127,7 @@ private fun Dispatcher.configureSignInCommand(
 
         val correctAuthCode = sendLoginEmail(name = message.from!!.firstName, email = email)
 
-        messageChannels.get(chatId)?.let { chan ->
+        messageChannels[chatId]?.let { chan ->
             while (!chan.isEmpty)
                 chan.receive()
         }
