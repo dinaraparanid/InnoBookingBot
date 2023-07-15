@@ -82,6 +82,7 @@ Kotlin (Bot itself) + TypeScript (WebApp)
 3. [styled-components](https://styled-components.com/)
 4. [React Router](https://reactrouter.com/en/main)
 5. [react-telegram-web-app](https://github.com/vkruglikov/react-telegram-web-app)
+6. [firebase](https://www.npmjs.com/package/firebase)
 
 ### Testing:
 
