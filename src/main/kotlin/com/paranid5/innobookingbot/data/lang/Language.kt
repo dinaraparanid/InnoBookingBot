@@ -27,6 +27,7 @@ sealed interface Language {
     val start: String
     val end: String
     val room: String
+    val successfullyBooked: String
 
     object English : Language {
         override fun getStart(name: String) = """
@@ -69,6 +70,8 @@ sealed interface Language {
         override val end = "End"
 
         override val room = "Room"
+
+        override val successfullyBooked = "Successfully booked"
 
         override fun toString() = "en"
     }
@@ -114,6 +117,8 @@ sealed interface Language {
         override val end = "Конец"
 
         override val room = "Аудитория"
+
+        override val successfullyBooked = "Успешно забронированно"
 
         override fun toString() = "ru"
     }

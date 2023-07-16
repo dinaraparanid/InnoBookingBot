@@ -24,13 +24,13 @@ fun Application.configureRouting(
         post("/notification") {
             val (tgIdStr, bookResponse) = Json.decodeFromString<NotificationData>(call.receiveText())
             val tgId = tgIdStr.toLong()
+            val lang = tgId.lang
 
             bot.sendMessage(
                 chatId = ChatId.fromId(tgId),
-                text = bookResponse.getMessage(tgId.lang)
+                text = "${lang.successfullyBooked}!\n${bookResponse.getMessage(lang)}"
             )
 
-            println("New booking received from WebApp")
             fetchNotifications(bot, ktorClient, bookEndNotificationTasks)
             call.respond(HttpStatusCode.OK)
         }
