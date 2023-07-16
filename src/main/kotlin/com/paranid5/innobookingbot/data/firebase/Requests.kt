@@ -1,13 +1,9 @@
 package com.paranid5.innobookingbot.data.firebase
 
 import com.google.firebase.cloud.FirestoreClient
-import io.github.cdimascio.dotenv.dotenv
+import com.paranid5.innobookingbot.data.lang.Language
 import java.util.*
-import javax.mail.Authenticator
-import javax.mail.Message
-import javax.mail.PasswordAuthentication
-import javax.mail.Session
-import javax.mail.Transport
+import javax.mail.*
 import javax.mail.internet.InternetAddress
 import javax.mail.internet.MimeMessage
 import kotlin.random.Random
@@ -15,10 +11,13 @@ import kotlin.random.nextInt
 
 private const val COLLECTION_NAME = "users"
 
-internal inline val Long.userData
+private inline val firestoreCollection
     get() = FirestoreClient
         .getFirestore()
         .collection(COLLECTION_NAME)
+
+internal inline val Long.userData
+    get() = firestoreCollection
         .whereEqualTo("tg_id", toString())
         .limit(1)
         .get()
@@ -32,22 +31,35 @@ internal inline val Long.isUserSignedIn: Boolean
 internal inline val Long.outlookEmail: String
     get() = userData!!.get("id")!! as String
 
+internal inline val Long.lang
+    get() = when (userData!!.get("lang")!! as String) {
+        "ru" -> Language.Russian
+        else -> Language.English
+    }
+
 internal inline val allUsersAsync
-    get() = FirestoreClient
-        .getFirestore()
-        .collection(COLLECTION_NAME)
-        .get()
+    get() = firestoreCollection.get()
+
+fun setLangAsync(tgId: String, lang: Language) =
+    firestoreCollection
+        .whereEqualTo("tg_id", tgId).limit(1)
+        .get().get()
+        .documents.firstOrNull()
+        ?.id?.let {
+            firestoreCollection
+                .document(it)
+                .update(mapOf("lang" to lang.toString()))
+                .get()
+        }
 
 fun addNewUserAsync(telegramId: Long, email: String) =
-    FirestoreClient
-        .getFirestore()
-        .collection(COLLECTION_NAME)
-        .add(
-            mapOf(
-                "id" to email,
-                "tg_id" to telegramId.toString()
-            )
+    firestoreCollection.add(
+        mapOf(
+            "id" to email,
+            "tg_id" to telegramId.toString(),
+            "lang" to "en"
         )
+    )
 
 fun sendLoginEmail(name: String, email: String): Int {
     val env = System.getenv()

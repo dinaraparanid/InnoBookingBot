@@ -2,19 +2,20 @@ package com.paranid5.innobookingbot.domain.bot
 
 import arrow.core.Either
 import com.github.kotlintelegrambot.dispatcher.Dispatcher
+import com.github.kotlintelegrambot.dispatcher.callbackQuery
 import com.github.kotlintelegrambot.dispatcher.command
 import com.github.kotlintelegrambot.dispatcher.handlers.CommandHandlerEnvironment
 import com.github.kotlintelegrambot.dispatcher.text
 import com.github.kotlintelegrambot.entities.ChatId
+import com.github.kotlintelegrambot.entities.InlineKeyboardMarkup
+import com.github.kotlintelegrambot.entities.keyboard.InlineKeyboardButton
 import com.paranid5.innobookingbot.data.BookRequest
 import com.paranid5.innobookingbot.data.BookResponse
 import com.paranid5.innobookingbot.data.BookTimePeriod
 import com.paranid5.innobookingbot.data.Room
 import com.paranid5.innobookingbot.data.extensions.*
-import com.paranid5.innobookingbot.data.firebase.addNewUserAsync
-import com.paranid5.innobookingbot.data.firebase.isUserSignedIn
-import com.paranid5.innobookingbot.data.firebase.outlookEmail
-import com.paranid5.innobookingbot.data.firebase.sendLoginEmail
+import com.paranid5.innobookingbot.data.firebase.*
+import com.paranid5.innobookingbot.data.lang.Language
 import com.paranid5.innobookingbot.domain.ktor.*
 import io.ktor.client.*
 import io.ktor.http.*
@@ -29,17 +30,33 @@ import kotlin.time.Duration.Companion.minutes
 
 private const val START_REQUEST = "start"
 private const val SIGN_IN_REQUEST = "sign_in"
+private const val LANG_REQUEST = "lang"
+
+@Deprecated("Available in WebApp")
 private const val ROOMS_REQUEST = "rooms"
+
+@Deprecated("Available in WebApp")
 private const val FREE_REQUEST = "free"
+
+@Deprecated("Available in WebApp")
 private const val MINE_REQUEST = "mine"
+
+@Deprecated("Available in WebApp")
 private const val BOOK_REQUEST = "book"
+
+@Deprecated("Available in WebApp")
 private const val BOOK_FILTER_REQUEST = "book_filter"
+
+@Deprecated("Available in WebApp")
 private const val CANCEL_REQUEST = "cancel"
+
+@Deprecated("Available in WebApp")
 private const val RULES_REQUEST = "rules"
 
 private val scope = CoroutineScope(Dispatchers.IO)
 
-private val innoEmailRegex = Regex("[a-z]+\\.[a-z]+@innopolis\\.university")
+private inline val innoEmailRegex
+    get() = Regex("[a-z]+\\.[a-z]+@innopolis\\.university")
 
 private inline val newMessageChannel
     get() = Channel<String>(
@@ -54,6 +71,7 @@ fun Dispatcher.configureCommands() {
 
     configureStartCommand()
     configureSignInCommand(messageChannels, inputControls, usersToTasks)
+    configureLang()
 
     text {
         update.consume()
@@ -71,7 +89,7 @@ private suspend inline fun CommandHandlerEnvironment.launchNotificationHandling(
 ) = coroutineScope {
     val task = launch(Dispatchers.IO) {
         val delayTime = maxOf(bookRequest.end - 5.minutes - currentLocalTime, Duration.ZERO)
-        println(delayTime)
+        println("Delay before ${bookRequest.title}: $delayTime")
         delay(delayTime)
 
         sendBookEndSoon(bookRequest.title)
@@ -85,16 +103,7 @@ private suspend inline fun CommandHandlerEnvironment.launchNotificationHandling(
 private fun Dispatcher.configureStartCommand() =
     command(START_REQUEST) {
         update.consume()
-
-        sendMessage(
-            """
-                Hello, ${message.chat.firstName}! I am Inno Booking Bot!
-                I can help you to book available study rooms in Innopolis University.
-
-                To start booking, please, /sign_in with your Innopolis (Outlook) email.
-                To book a room, click on 'Book room' button below.
-            """.trimIndent()
-        )
+        sendMessage(telegramId.lang.getStart(name = message.chat.firstName ?: "?"))
     }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -138,13 +147,59 @@ private fun Dispatcher.configureSignInCommand(
         }
 
         if (inputAuthCode != correctAuthCode) {
-            sendError("Incorrect auth code. Please, try again")
+            sendIncorrectAuthCodeError()
             inputController.set(false)
             return@launch
         }
 
         addNewUserAsync(telegramId, email)
-        sendMessage("You have successfully confirmed your email! Now you have an access to bot's functionality")
+        sendMessage(telegramId.lang.emailConfirmed)
+    }
+}
+
+private fun Dispatcher.configureLang() {
+    command(LANG_REQUEST) {
+        update.consume()
+
+        scope.launch(Dispatchers.IO) {
+            if (!telegramId.isUserSignedIn) {
+                sendNotSignedInError()
+                return@launch
+            }
+
+            val langButtons = InlineKeyboardMarkup.create(
+                listOf(
+                    InlineKeyboardButton.CallbackData(
+                        text = Language.english,
+                        callbackData = Language.English.toString()
+                    ),
+                    InlineKeyboardButton.CallbackData(
+                        text = Language.russian,
+                        callbackData = Language.Russian.toString()
+                    )
+                )
+            )
+
+            bot.sendMessage(
+                chatId = chatId,
+                text = "",
+                replyMarkup = langButtons,
+            )
+        }
+    }
+
+    callbackQuery(callbackData = Language.English.toString()) {
+        update.consume()
+        callbackQuery.message?.from?.id?.toString()?.let { tgId ->
+            setLangAsync(tgId, Language.English)
+        }
+    }
+
+    callbackQuery(callbackData = Language.Russian.toString()) {
+        update.consume()
+        callbackQuery.message?.from?.id?.toString()?.let { tgId ->
+            setLangAsync(tgId, Language.Russian)
+        }
     }
 }
 
@@ -350,21 +405,26 @@ private fun Dispatcher.configureRulesCommand() =
 fun CommandHandlerEnvironment.sendMessage(text: String) =
     bot.sendMessage(chatId, text)
 
+@Deprecated("Available in WebApp")
 fun CommandHandlerEnvironment.sendRooms(rooms: List<Room>) =
     sendMessage(rooms.joinedString)
 
+@Deprecated("Available in WebApp")
 fun CommandHandlerEnvironment.sendBookingResponse(bookingResponse: BookResponse) =
     sendMessage(bookingResponse.successfulBookingMessage)
 
+@Deprecated("Available in WebApp")
 fun CommandHandlerEnvironment.sendBookings(bookings: List<BookResponse>) =
     sendMessage(bookings.takeIf { it.isNotEmpty() }?.joinedToMessage ?: "No bookings found")
 
+@Deprecated("Available in WebApp")
 private fun CommandHandlerEnvironment.sendBookTitleRequest() =
     sendMessage("Please, specify title for the event")
 
 private fun CommandHandlerEnvironment.sendEmailRequestForBooking() =
-    sendMessage("Please, specify your Innopolis email (e.g. i.ivanov@innopolis.univeristy)")
+    sendMessage(telegramId.lang.specifyEmail)
 
+@Deprecated("Available in WebApp")
 private fun CommandHandlerEnvironment.sendStartBookTimePeriodRequest() =
     sendMessage(
         """
@@ -373,6 +433,7 @@ private fun CommandHandlerEnvironment.sendStartBookTimePeriodRequest() =
         """.trimIndent()
     )
 
+@Deprecated("Available in WebApp")
 private fun CommandHandlerEnvironment.sendEndBookTimePeriodRequest() =
     sendMessage(
         """
@@ -381,17 +442,19 @@ private fun CommandHandlerEnvironment.sendEndBookTimePeriodRequest() =
         """.trimIndent()
     )
 
+@Deprecated("Available in WebApp")
 private fun CommandHandlerEnvironment.sendBookRoomIdRequest() =
     sendMessage("Please, specify room's id for the event")
 
+@Deprecated("Available in WebApp")
 private fun CommandHandlerEnvironment.sendBookIdRequest() =
     sendMessage("Please, specify book's id")
 
 private fun CommandHandlerEnvironment.sendEmailAuthCodeRequest() =
-    sendMessage("To verify your identity, email to your Outlook email was sent. Please, provide auth code to finish login")
+    sendMessage(telegramId.lang.emailSent)
 
 private fun CommandHandlerEnvironment.sendError(message: String) =
-    sendMessage("Error: $message")
+    sendMessage("${telegramId.lang.error}: $message")
 
 private fun CommandHandlerEnvironment.sendAPIError() =
     sendError("API token was not provided, is invalid or has been expired")
@@ -399,17 +462,24 @@ private fun CommandHandlerEnvironment.sendAPIError() =
 private fun CommandHandlerEnvironment.sendValidationError() =
     sendError("Validation error")
 
+@Deprecated("Available in WebApp")
 private fun CommandHandlerEnvironment.sendCannotBookError() =
     sendError("This room cannot be booked by you during this time period")
 
 private fun CommandHandlerEnvironment.sendNotSignedInError() =
     sendError("You have not confirmed your email. Please, use /sign_in first")
 
+private fun CommandHandlerEnvironment.sendIncorrectEmailError() =
+    sendError(telegramId.lang.incorrectEmail)
+
+private fun CommandHandlerEnvironment.sendIncorrectAuthCodeError() =
+    sendError(telegramId.lang.incorrectAuthCode)
+
 private fun CommandHandlerEnvironment.sendBookEndSoon(bookTitle: String) =
-    sendMessage("Remainder: your booking `$bookTitle` is about to end in five minutes")
+    sendMessage(telegramId.lang.getRemainderBookEnd(bookTitle))
 
 private fun CommandHandlerEnvironment.sendAlreadySignedInError() =
-    sendError("You are already signed in")
+    sendError(telegramId.lang.alreadySignedIn)
 
 private fun CommandHandlerEnvironment.sendError(statusCode: HttpStatusCode) = when (statusCode) {
     HttpStatusCode.BadRequest -> sendCannotBookError()
@@ -423,11 +493,13 @@ private suspend inline fun getNextMessage(
     messageChannels: MutableMap<ChatId, Channel<String>>,
 ) = messageChannels.getOrPut(chatId, ::newMessageChannel).receive()
 
+@Deprecated("Available in WebApp")
 private suspend inline fun getBookTime(
     chatId: ChatId,
     messageChannels: MutableMap<ChatId, Channel<String>>
 ) = getNextMessage(chatId, messageChannels).toInstantOrNull()
 
+@Deprecated("Available in WebApp")
 private suspend inline fun CommandHandlerEnvironment.getBookTitleOrSendError(
     chatId: ChatId,
     messageChannels: MutableMap<ChatId, Channel<String>>
@@ -451,11 +523,12 @@ private suspend inline fun CommandHandlerEnvironment.getEmailOrSendError(
     val email = getNextMessage(chatId, messageChannels).takeIf { it.matches(innoEmailRegex) }
 
     if (email == null)
-        sendError("Incorrect email input. Please, try again")
+        sendIncorrectEmailError()
 
     return email
 }
 
+@Deprecated("Available in WebApp")
 private suspend inline fun CommandHandlerEnvironment.getBookTimeOrSendError(
     chatId: ChatId,
     messageChannels: MutableMap<ChatId, Channel<String>>,
@@ -471,6 +544,7 @@ private suspend inline fun CommandHandlerEnvironment.getBookTimeOrSendError(
     return time
 }
 
+@Deprecated("Available in WebApp")
 private suspend inline fun CommandHandlerEnvironment.getBookTimePeriodsOrSendError(
     chatId: ChatId,
     messageChannels: MutableMap<ChatId, Channel<String>>
@@ -492,11 +566,12 @@ private suspend inline fun CommandHandlerEnvironment.getEmailAuthCodeOrSendError
     val code = getEmailAuthCode(chatId, messageChannels)
 
     if (code == null)
-        sendError("Input parsing error. Please, try again")
+        sendIncorrectAuthCodeError()
 
     return code
 }
 
+@Deprecated("Available in WebApp")
 private suspend inline fun CommandHandlerEnvironment.getBookRoomId(
     chatId: ChatId,
     messageChannels: MutableMap<ChatId, Channel<String>>
@@ -505,6 +580,7 @@ private suspend inline fun CommandHandlerEnvironment.getBookRoomId(
     return getNextMessage(chatId, messageChannels)
 }
 
+@Deprecated("Available in WebApp")
 private suspend inline fun CommandHandlerEnvironment.getBookId(
     chatId: ChatId,
     messageChannels: MutableMap<ChatId, Channel<String>>
