@@ -1,5 +1,8 @@
 # InnoBookingBot
 
+[![Kotlin](https://img.shields.io/badge/kotlin-1.8.21-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)
+
 This bot allows to make bookings in Innopolis University, look through them, update and delete.
 Moreover, it provides an opportunity to overview all available rooms and timeslots.
 
