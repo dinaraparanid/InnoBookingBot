@@ -532,7 +532,7 @@ fun EmailPage(name: String, code: Int) =
                                                                             signed up in InnoBookingBot.<br><br>Confirm your email
                                                                             address by entering this code in out bot. This step adds
                                                                             extra security by verifying you own
-                                                                            this email.</p></td>
+                                                                            this email.<br><br>If you haven't used our bot, just ignore this message</p></td>
                                                                 </tr>
                                                             </table>
                                                         </td>
@@ -544,6 +544,7 @@ fun EmailPage(name: String, code: Int) =
                                 </td>
                             </tr>
                         </table>
+                        
                         <table cellpadding="0" cellspacing="0" class="es-content" align="center"
                                style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;width:100%;table-layout:fixed !important">
                             <tr>
