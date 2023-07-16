@@ -413,7 +413,7 @@ fun CommandHandlerEnvironment.sendRooms(rooms: List<Room>) =
 
 @Deprecated("Available in WebApp")
 fun CommandHandlerEnvironment.sendBookingResponse(bookingResponse: BookResponse) =
-    sendMessage(bookingResponse.successfulBookingMessage)
+    sendMessage(bookingResponse.getSuccessfulBookingMessage(Language.English))
 
 @Deprecated("Available in WebApp")
 fun CommandHandlerEnvironment.sendBookings(bookings: List<BookResponse>) =

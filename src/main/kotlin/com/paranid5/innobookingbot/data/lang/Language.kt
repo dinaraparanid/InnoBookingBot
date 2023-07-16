@@ -13,12 +13,20 @@ sealed interface Language {
     val specifyEmail: String
     val emailSent: String
     val emailConfirmed: String
+
     val error: String
     val alreadySignedIn: String
-    fun getRemainderBookEnd(bookTitle: String): String
     val incorrectEmail: String
     val incorrectAuthCode: String
+
+    fun getRemainderBookEnd(bookTitle: String): String
     val changeLang: String
+
+    val bookId: String
+    val eventTitle: String
+    val start: String
+    val end: String
+    val room: String
 
     object English : Language {
         override fun getStart(name: String) = """
@@ -51,6 +59,16 @@ sealed interface Language {
         override val incorrectAuthCode = "Incorrect auth code. Please, /sign_in again"
 
         override val changeLang = "Choose language"
+
+        override val bookId = "Book ID"
+
+        override val eventTitle = "Event Title"
+
+        override val start = "Start"
+
+        override val end = "End"
+
+        override val room = "Room"
 
         override fun toString() = "en"
     }
@@ -86,6 +104,16 @@ sealed interface Language {
         override val incorrectAuthCode = "Некорректный код. Авторизуйтесь через /sign_in ещё раз"
 
         override val changeLang = "Выберите язык"
+
+        override val bookId = "ID Брони"
+
+        override val eventTitle = "Название Ивента"
+
+        override val start = "Начало"
+
+        override val end = "Конец"
+
+        override val room = "Аудитория"
 
         override fun toString() = "ru"
     }

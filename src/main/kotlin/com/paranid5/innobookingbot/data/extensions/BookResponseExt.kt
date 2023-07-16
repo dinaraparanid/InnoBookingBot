@@ -1,22 +1,22 @@
 package com.paranid5.innobookingbot.data.extensions
 
 import com.paranid5.innobookingbot.data.BookResponse
+import com.paranid5.innobookingbot.data.lang.Language
 
-inline val BookResponse.message
-    get() = """
-        Booking id: $id;
-        Event title: $title
-        Start: $start
-        End: $end
-        Room: ${room.name}
+fun BookResponse.getMessage(lang: Language) = """
+        ${lang.bookId}: $id
+        ${lang.eventTitle}: $title
+        ${lang.start}: $start
+        ${lang.end}: $end
+        ${lang.room}: ${room.name}
     """.trimIndent()
 
-inline val BookResponse.successfulBookingMessage
-    get() = "Successfully booked!\n\n$message"
+fun BookResponse.getSuccessfulBookingMessage(lang: Language) =
+    "Successfully booked!\n\n${getMessage(lang)}"
 
 inline val List<BookResponse>.joinedToMessage
     get() = mapIndexed { ind, bookResponse ->
         """
 ---------- #${ind + 1} ----------
-${bookResponse.message}""".trimIndent()
+${bookResponse.getMessage(Language.English)}""".trimIndent()
     }.joinToString(separator = "\n\n")

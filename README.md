@@ -17,46 +17,90 @@ then enter the code that was sent to your email. After that, you need to open
 WebApp and use navigation page to select option you're interested in.
 Then just follow instructions on corresponding pages and make the following:
 
-1. `Book Room` - main page for making your books
-2. `All Bookings` - page with all bookings at the calendar
-3. `My Bookings` - list of your bookings
-4. `Rules` - list of rules that you need to notice
+<ul>
+    <li>Book Room - main page for making your books</li>
+    <li>All Bookings - page with all bookings at the calendar</li>
+    <li>My Bookings - list of your bookings</li>
+    <li>Rules - list of rules that you need to notice</li>
+</ul>
 
 You can delete your booking at both `My Bookings` and `All Bookings` pages
 
 ### For your convenience, Russian localization was added
 
+## Features list:
+
+<ul>
+    <li>Bot displays available rooms and allow to book them for any suitable period of time</li>
+    <li>Bot provides a handler registration mechanism</li>
+    <li>User can see booking rules</li>
+    <li>User can see his bookings and delete them</li>
+    <li>User can see all bookings</li>
+    <li>User is notified a few minutes before the end of his booking</li>
+    <li>Web-app inside the bot provides the same functionality</li>
+</ul>
+
 ## Project Demo
 
 ### General view of WebApp:
 
-![general_view](https://i.ibb.co/jfjSPKg/general.png)
+<img src="https://i.ibb.co/jfjSPKg/general.png" alt="general" width="600">
 
 ### Booking Page:
 
-![book](https://i.ibb.co/JtHQt4y/book.png)
+<img src="https://i.ibb.co/JtHQt4y/book.png" alt="booking" width="350">
 
 ### Booking Confirmation
 
-![confirm](https://i.ibb.co/jMztQ66/book-fin.png)
+<img src="https://i.ibb.co/jMztQ66/book-fin.png" alt="notification" width="350">
 
 ### The list of your bookings
 
-![my](https://i.ibb.co/0Y8nx8C/my.png)
+<img src="https://i.ibb.co/0Y8nx8C/my.png" alt="my" width="350">
 
 ### Choosing rooms in All Bookings
 
-![chooseRoom](https://i.ibb.co/9qvS0Tv/rooms-Choose.jpg)
+<img src="https://i.ibb.co/hdw2BcB/current.png" alt="current" width="350">
 
 ### Detailed bookings
 
-![current](https://i.ibb.co/0fjG85z/current.jpg)
+<img src="https://i.ibb.co/hdw2BcB/current.png" alt="current" width="350">
 
 ### Rules
 
-![rules](https://i.ibb.co/7z4YpvL/rules.png)
+<img src="https://i.ibb.co/7z4YpvL/rules.png" alt="rules" width="350">
 
 ## Setup
+
+### Bot
+
+Bot can be deployed with docker:
+
+```shell
+docker build -t innobookingbot .
+docker run -p <port>:<port> innobookingbot
+```
+
+Next environmental variables should be provided:
+
+```
+BOT_TOKEN='your bot token'
+EMAIL_AUTH='email sender, e.g. i.ivanov@innopolis.university'
+EMAIL_AUTH_PASSWORD='email password'
+DATABASE_URL='firestore database url'
+PROJECT_ID='firebase project ID'
+CREDENTIALS_PATH='firebase project .json file'
+PORT='desired port (maybe chosen by the host)'
+```
+
+If you want to build bot on your machine explicitly, you can use gradle:
+
+```shell
+./gradlew build
+./gradlew run
+```
+
+### WebApp
 
 Link to the WebApp: https://gitlab.pg.innopolis.university/swp29/innobookingfrontend
 
