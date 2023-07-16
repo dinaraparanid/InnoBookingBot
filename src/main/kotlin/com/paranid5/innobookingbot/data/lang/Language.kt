@@ -18,6 +18,7 @@ sealed interface Language {
     fun getRemainderBookEnd(bookTitle: String): String
     val incorrectEmail: String
     val incorrectAuthCode: String
+    val changeLang: String
 
     object English : Language {
         override fun getStart(name: String) = """
@@ -48,6 +49,8 @@ sealed interface Language {
         override val incorrectEmail = "Incorrect email input. Please, try again"
 
         override val incorrectAuthCode = "Incorrect auth code. Please, /sign_in again"
+
+        override val changeLang = "Choose language"
 
         override fun toString() = "en"
     }
@@ -81,6 +84,8 @@ sealed interface Language {
         override val incorrectEmail = "Некорректный ввод почты. Попробуйте ещё раз"
 
         override val incorrectAuthCode = "Некорректный код. Авторизуйтесь через /sign_in ещё раз"
+
+        override val changeLang = "Выберите язык"
 
         override fun toString() = "ru"
     }
