@@ -32,7 +32,7 @@ internal inline val Long.outlookEmail: String
     get() = userData!!.get("id")!! as String
 
 internal inline val Long.lang
-    get() = when (userData?.get("lang")!! as String) {
+    get() = when (userData?.get("lang") as? String?) {
         "ru" -> Language.Russian
         else -> Language.English
     }

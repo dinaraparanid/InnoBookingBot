@@ -3,7 +3,6 @@ package com.paranid5.innobookingbot.data.firebase
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
-import io.github.cdimascio.dotenv.dotenv
 import java.io.FileInputStream
 
 fun configureFirebase() {

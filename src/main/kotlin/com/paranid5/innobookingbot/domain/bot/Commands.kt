@@ -71,7 +71,7 @@ fun Dispatcher.configureCommands() {
 
     configureStartCommand()
     configureSignInCommand(messageChannels, inputControls, usersToTasks)
-    configureLang()
+    configureLangCommand()
 
     text {
         update.consume()
@@ -157,7 +157,7 @@ private fun Dispatcher.configureSignInCommand(
     }
 }
 
-private fun Dispatcher.configureLang() {
+private fun Dispatcher.configureLangCommand() {
     command(LANG_REQUEST) {
         update.consume()
 
@@ -182,24 +182,26 @@ private fun Dispatcher.configureLang() {
 
             bot.sendMessage(
                 chatId = chatId,
-                text = "",
+                text = "Choose lang",
                 replyMarkup = langButtons,
             )
         }
     }
 
-    callbackQuery(callbackData = Language.English.toString()) {
+    callbackQuery(
+        callbackData = Language.English.toString(),
+        callbackAnswerText = "Now let's talk on English"
+    ) {
         update.consume()
-        callbackQuery.message?.from?.id?.toString()?.let { tgId ->
-            setLangAsync(tgId, Language.English)
-        }
+        setLangAsync(callbackQuery.from.id.toString(), Language.English)
     }
 
-    callbackQuery(callbackData = Language.Russian.toString()) {
+    callbackQuery(
+        callbackData = Language.Russian.toString(),
+        callbackAnswerText = "Теперь я говорю на русском"
+    ) {
         update.consume()
-        callbackQuery.message?.from?.id?.toString()?.let { tgId ->
-            setLangAsync(tgId, Language.Russian)
-        }
+        setLangAsync(callbackQuery.from.id.toString(), Language.Russian)
     }
 }
 

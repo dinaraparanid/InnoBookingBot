@@ -3,6 +3,7 @@ package com.paranid5.innobookingbot.domain.ktor.notifications
 import com.github.kotlintelegrambot.Bot
 import com.paranid5.innobookingbot.domain.ktor.notifications.plugins.configureHTTP
 import com.paranid5.innobookingbot.domain.ktor.notifications.plugins.configureRouting
+import io.github.cdimascio.dotenv.dotenv
 import io.ktor.client.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
