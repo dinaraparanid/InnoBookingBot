@@ -2,13 +2,13 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     application
-    kotlin("jvm") version "1.8.21"
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.8.21"
+    kotlin("jvm") version "1.9.0"
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "com.paranid5"
-version = "0.0.0.1"
+version = "0.1.0.0"
 
 repositories {
     mavenCentral()
@@ -40,6 +40,7 @@ dependencies {
 
     implementation("com.google.firebase:firebase-admin:9.2.0")
     implementation("com.sun.mail:javax.mail:1.6.2")
+    implementation("com.charleskorn.kaml:kaml:0.55.0")
 
     testImplementation("org.mockito:mockito-inline:5.2.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.2.0")

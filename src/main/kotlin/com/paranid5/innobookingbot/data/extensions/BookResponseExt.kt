@@ -12,7 +12,7 @@ fun BookResponse.getMessage(lang: Language) = """
     """.trimIndent()
 
 fun BookResponse.getSuccessfulBookingMessage(lang: Language) =
-    "Successfully booked!\n\n${getMessage(lang)}"
+    "${lang.successfullyBooked}\n\n${getMessage(lang)}"
 
 inline val List<BookResponse>.joinedToMessage
     get() = mapIndexed { ind, bookResponse ->

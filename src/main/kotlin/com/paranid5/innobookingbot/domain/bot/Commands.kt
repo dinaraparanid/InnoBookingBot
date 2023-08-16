@@ -182,7 +182,7 @@ private fun Dispatcher.configureLangCommand() {
 
             bot.sendMessage(
                 chatId = chatId,
-                text = telegramId.lang.changeLang,
+                text = telegramId.lang.chooseLang,
                 replyMarkup = langButtons,
             )
         }

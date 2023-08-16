@@ -6,6 +6,12 @@
 This bot allows to make bookings in Innopolis University, look through them, update and delete.
 Moreover, it provides an opportunity to overview all available rooms and timeslots.
 
+### Project status
+
+Both bot and its API are **offline**.
+Project can be enhanced to your needs and launched again on your personal hosting.
+See **Setup** section for more details
+
 ### You can try to use our bot [here](https://t.me/InnoBooking_bot)
 
 Or you can use telegram tag: @InnoBooking_bot
@@ -102,7 +108,7 @@ If you want to build bot on your machine explicitly, you can use gradle:
 
 ### WebApp
 
-Link to the WebApp: https://gitlab.pg.innopolis.university/swp29/innobookingfrontend
+[Link to the WebApp](https://github.com/dmhd6219/booking-bot-frontend)
 
 In a WebApp directory you can find corresponding README file that will you launch
 our project on your machine.
@@ -120,7 +126,8 @@ Kotlin (Bot itself) + TypeScript (WebApp)
 3. [kotlin-telegram-bot](https://github.com/kotlin-telegram-bot/kotlin-telegram-bot)
 4. [firebase-admin](https://firebase.google.com/docs/admin/setup)
 5. [JavaMail](https://javaee.github.io/javamail/)
-6. [logback](https://github.com/qos-ch/logback)
+6. [Kaml](https://github.com/charleskorn/kaml)
+7. [logback](https://github.com/qos-ch/logback)
 
 ### WebApp:
 

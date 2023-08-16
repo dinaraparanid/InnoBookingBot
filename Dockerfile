@@ -11,8 +11,9 @@ FROM openjdk:17
 RUN mkdir /app
 COPY --from=build /home/gradle/src/build/libs/*.jar /app/InnoBookingBot.jar
 COPY gaydb-309f8-firebase-adminsdk-va4vn-aef993aeb9.json gaydb-309f8-firebase-adminsdk-va4vn-aef993aeb9.json
+COPY /src/main/resources /src/main/resources
 
-EXPOSE 1337
+EXPOSE 3000
 
 # Start point in your app
 # In my case it was not required

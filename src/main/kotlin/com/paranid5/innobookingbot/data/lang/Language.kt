@@ -1,7 +1,28 @@
 package com.paranid5.innobookingbot.data.lang
 
+import com.charleskorn.kaml.Yaml
+import com.charleskorn.kaml.decodeFromStream
+import java.io.File
+
 sealed interface Language {
     companion object {
+        private const val GET_START = "get-start"
+        private const val SPECIFY_EMAIL = "specify-email"
+        private const val EMAIL_SENT = "email-sent"
+        private const val EMAIL_CONFIRMED = "email-confirmed"
+        private const val ERROR = "error"
+        private const val ALREADY_SIGNED_IN = "already-signed-in"
+        private const val GET_REMAINDER_BOOK_END = "get-remainder-book-end"
+        private const val INCORRECT_EMAIL = "incorrect-email"
+        private const val INCORRECT_AUTH_CODE = "incorrect-auth-code"
+        private const val CHOOSE_LANG = "choose-lang"
+        private const val BOOK_ID = "book-id"
+        private const val EVENT_TITLE = "event-title"
+        private const val START = "start"
+        private const val END = "end"
+        private const val ROOM = "room"
+        private const val SUCCESSFULLY_BOOKED = "successfully-booked"
+
         inline val english
             get() = "English"
 
@@ -9,116 +30,60 @@ sealed interface Language {
             get() = "Русский"
     }
 
-    fun getStart(name: String): String
-    val specifyEmail: String
-    val emailSent: String
-    val emailConfirmed: String
+    val data: Map<String, String>
 
-    val error: String
-    val alreadySignedIn: String
-    val incorrectEmail: String
-    val incorrectAuthCode: String
+    private inline val String.fromData
+        get() = data[this]!!
 
-    fun getRemainderBookEnd(bookTitle: String): String
-    val changeLang: String
+    fun getStart(name: String) = GET_START.fromData.replace("{name}", name)
 
-    val bookId: String
-    val eventTitle: String
-    val start: String
-    val end: String
-    val room: String
-    val successfullyBooked: String
+    val specifyEmail get() = SPECIFY_EMAIL.fromData
 
-    object English : Language {
-        override fun getStart(name: String) = """
-                Hello, $name! I am Inno Booking Bot!
-                I can help you to book available study rooms in Innopolis University.
+    val emailSent get() = EMAIL_SENT.fromData
 
-                To start booking, please, /sign_in with your Innopolis (Outlook) email.
-                To change language, use /lang
-                To book a room, click on 'Book room' button below.
-            """.trimIndent()
+    val emailConfirmed get() = EMAIL_CONFIRMED.fromData
 
-        override val specifyEmail =
-            "Please, specify your Innopolis email (e.g. i.ivanov@innopolis.univeristy)"
+    val error get() = ERROR.fromData
 
-        override val emailSent =
-            "To verify your identity, email to your Outlook email was sent. Please, provide auth code to finish login"
+    val alreadySignedIn get() = ALREADY_SIGNED_IN.fromData
 
-        override val emailConfirmed =
-            "You have successfully confirmed your email! Now you have an access to bot's functionality"
+    fun getRemainderBookEnd(bookTitle: String) =
+        GET_REMAINDER_BOOK_END.fromData.replace("{bookTitle}", bookTitle)
 
-        override val error = "Error"
+    val incorrectEmail get() = INCORRECT_EMAIL.fromData
 
-        override val alreadySignedIn = "You are already signed in"
+    val incorrectAuthCode get() = INCORRECT_AUTH_CODE.fromData
 
-        override fun getRemainderBookEnd(bookTitle: String) =
-            "Remainder: your booking `$bookTitle` is about to end in five minutes"
+    val chooseLang get() = CHOOSE_LANG.fromData
 
-        override val incorrectEmail = "Incorrect email input. Please, try again"
+    val bookId get() = BOOK_ID.fromData
 
-        override val incorrectAuthCode = "Incorrect auth code. Please, /sign_in again"
+    val eventTitle get() = EVENT_TITLE.fromData
 
-        override val changeLang = "Choose language"
+    val start get() = START.fromData
 
-        override val bookId = "Book ID"
+    val end get() = END.fromData
 
-        override val eventTitle = "Event Title"
+    val room get() = ROOM.fromData
 
-        override val start = "Start"
+    val successfullyBooked get() = SUCCESSFULLY_BOOKED.fromData
 
-        override val end = "End"
-
-        override val room = "Room"
-
-        override val successfullyBooked = "Successfully booked"
+    data object English : Language {
+        override val data by lazy {
+            Yaml.default.decodeFromStream<Map<String, String>>(
+                File("src/main/resources/lang/en.yaml").inputStream()
+            )
+        }
 
         override fun toString() = "en"
     }
 
-    object Russian : Language {
-        override fun getStart(name: String) = """
-                Привет, $name! Я Inno Booking Bot!
-                Я умею бронировать свободные учебные аудитории в Университете Иннополис.
-
-                Перед началом, пожалуйста, /sign_in со своей Outlook почтой Иннополиса.
-                Чтобы сменить язык, используйте /lang
-                Чтобы забронировать аудиторию, нажмите на кнопку 'Book room' снизу
-            """.trimIndent()
-
-        override val specifyEmail =
-            "Пожалуйста, укажите свою почту Иннополиса (прим, i.ivanov@innopolis.univeristy)"
-
-        override val emailSent =
-            "Для удостоверения вашей личности, было отправлено письмо на почту. Пожалуйста, укажите код из письма, чтобы завершить авторизацию"
-
-        override val emailConfirmed =
-            "Вы успешно подтвердили вашу почту! Теперь у вас доступ к функционалу бота"
-
-        override val error = "Ошибка"
-
-        override val alreadySignedIn = "Вы уже вошли"
-
-        override fun getRemainderBookEnd(bookTitle: String) =
-            "Напоминание: ваша бронь `$bookTitle` закончится через 5 минут"
-
-        override val incorrectEmail = "Некорректный ввод почты. Попробуйте ещё раз"
-
-        override val incorrectAuthCode = "Некорректный код. Авторизуйтесь через /sign_in ещё раз"
-
-        override val changeLang = "Выберите язык"
-
-        override val bookId = "ID Брони"
-
-        override val eventTitle = "Название Ивента"
-
-        override val start = "Начало"
-
-        override val end = "Конец"
-
-        override val room = "Аудитория"
-
-        override val successfullyBooked = "Успешно забронированно"
+    data object Russian : Language {
+        override val data by lazy {
+            Yaml.default.decodeFromStream<Map<String, String>>(
+                File("src/main/resources/lang/ru.yaml").inputStream()
+            )
+        }
 
         override fun toString() = "ru"
     }
